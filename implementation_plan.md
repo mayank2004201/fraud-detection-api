@@ -107,6 +107,13 @@ POST /query → {
 - A Render account → https://render.com
 - A GitHub account
 
+#### [Files to Implement]
+- **`app/main.py`**: Initial entry point (stub).
+- **`.gitignore`**: Exclude `venv/`, `.env`, and `__pycache__`.
+- **`.env.example`**: Template for Groq and API keys.
+- **`requirements.txt`**: List all core dependencies (FastAPI, XGBoost, etc.).
+- **`scripts/setup_structure.py`**: The script (formerly `template.py`) to generate the folder tree.
+
 ### Step-by-step
 
 **Step 1 — Create the project folder and Git repo**
@@ -127,44 +134,42 @@ POST /query → {
 fraud-detection-api/
 ├── app/
 │   ├── __init__.py
-│
+│   ├── main.py
 │   ├── core/
+│   │   ├── __init__.py
 │   │   ├── config.py
 │   │   ├── constants.py
 │   │   ├── logger.py            # central logging setup
-│   │   └── logging_config.py    # format + handlers
-│
+│   │   ├── logging_config.py    # format + handlers
+│   │   └── security.py          # API key and security logic
 │   ├── api/
 │   │   ├── __init__.py
 │   │   ├── routes.py
-│   │   └── dependencies.py
-│
+│   │   ├── dependencies.py
+│   │   └── middleware.py        # rate limiting and auth middleware
 │   ├── schemas/
 │   │   ├── __init__.py
 │   │   └── schemas.py
-│
 │   ├── services/
 │   │   ├── __init__.py
 │   │   ├── risk_engine.py
-│   │   └── analysis_service.py
-│
+│   │   ├── analysis_service.py
+│   │   └── llm_query_service.py # NL -> SQL execution logic
 │   ├── ml/
 │   │   ├── __init__.py
-│   │   ├── inference.py
+│   │   ├── inference.py         # main prediction entry point
+│   │   ├── preprocessing.py     # scaling and transformation
 │   │   └── utils.py
-│
 │   ├── llm/
 │   │   ├── __init__.py
-│   │   ├── investigator.py
-│   │   ├── override.py
-│   │   ├── query.py
+│   │   ├── client.py            # Groq client initialization
+│   │   ├── llm_investigator.py
+│   │   ├── llm_override.py
+│   │   ├── llm_query.py
 │   │   └── prompts.py
-│
 │   ├── storage/
 │   │   ├── __init__.py
-│   │   └── storage.py
-│
-│   └── main.py
+│   │   └── storage_handler.py
 │
 ├── monitoring/
 │   ├── __init__.py
@@ -186,7 +191,8 @@ fraud-detection-api/
 │   ├── __init__.py
 │   ├── test_api.py
 │   ├── test_ml.py
-│   └── test_llm.py
+│   ├── test_llm.py
+│   └── test_storage.py
 │
 ├── scripts/
 │   └── setup_structure.py
@@ -237,6 +243,11 @@ Core packages to include:
 
 ### Why Google Colab, not locally
 Colab gives you free CPU (and sometimes GPU) with no setup. Training XGBoost on 284k rows is fast on CPU — under 5 minutes. Colab is only for training. Everything else runs locally and on Render.
+
+#### [Files to Implement]
+- **`training/train.ipynb`**: Complete training walkthrough (Kaggle dataset -> Serialized model).
+- **`training/pipeline.py`**: Reusable script for model retraining.
+- **`model/model.pkl`**: The combined dictionary of model, scaler, and baseline stats (output of this phase).
 
 ### Concepts to learn and apply (in order)
 
@@ -298,7 +309,7 @@ Three approaches to consider (pick one or combine):
 
 ---
 
-## Phase 2 — ML Engine (`app/ml_engine.py`)
+## Phase 2 — ML Engine (`app/ml/inference.py`)
 
 **STATUS: NOT STARTED**
 **Estimated time: 1 day**
@@ -306,6 +317,11 @@ Three approaches to consider (pick one or combine):
 
 ### What this file is responsible for
 Loading `model.pkl` at startup and exposing a single function that takes a transaction dict and returns `fraud_probability`, `anomaly_score`, and `top_shap_factors`. Nothing else. No FastAPI, no LLM, no storage.
+
+#### [Files to Implement]
+- **`app/ml/inference.py`**: Model loading (lifespan) and prediction logic.
+- **`app/ml/preprocessing.py`**: Scaling of `Amount` and `Time` features.
+- **`app/ml/utils.py`**: Helper functions for SHAP impact extraction.
 
 ### Concepts to implement
 
@@ -363,11 +379,16 @@ This is the most important phase for differentiation. The LLM plays three distin
 
 ---
 
-### Role 1 — Fraud Investigator (`app/llm_investigator.py`)
+### Role 1 — Fraud Investigator (`app/llm/llm_investigator.py`)
 
 **What it does**: Takes the ML output (scores + SHAP factors) and produces a structured case note that a human fraud analyst would find actionable. This runs on every single `/predict` call.
 
 **Why the ML model cannot do this**: The ML model outputs numbers. Numbers alone cannot explain context, cannot reference time-of-day patterns, cannot write "this matches card-testing behaviour" — that requires language and reasoning.
+
+#### [Files to Implement]
+- **`app/llm/client.py`**: Shared Groq client initialization (Singleton).
+- **`app/llm/prompts.py`**: Central storage for formatting and system prompts for all 3 roles.
+- **`app/llm/llm_investigator.py`**: Logic for converting ML scores into structured case notes.
 
 **Concepts to learn**
 
@@ -405,13 +426,16 @@ Hold transaction. Trigger 2FA challenge to cardholder before processing.
 
 ---
 
-### Role 2 — Risk Override (`app/llm_override.py`)
+### Role 2 — Risk Override (`app/llm/llm_override.py`)
 
 **What it does**: Only activates when `fraud_probability` is between 0.4 and 0.7 (the uncertain zone). The LLM evaluates additional contextual signals and either escalates to HIGH or clears to LOW, with a recorded reason. This *changes the final verdict* — not just annotates it.
 
 **Why this role is architecturally significant**: The LLM is in the decision path, not just the output path. The final risk level that gets returned to the client may differ from what the ML model said. `was_overridden: true` becomes a first-class field in your response.
 
 **Concepts to learn**
+
+#### [Files to Implement]
+- **`app/llm/llm_override.py`**: Logic for Eskalate/Clear decisions in the uncertain ML score range (0.4 - 0.7).
 
 *Conditional LLM invocation*
 - Only call this when `0.4 <= fraud_probability <= 0.7`
@@ -440,13 +464,17 @@ Hold transaction. Trigger 2FA challenge to cardholder before processing.
 
 ---
 
-### Role 3 — Natural Language Query Engine (`app/llm_query.py`)
+### Role 3 — Natural Language Query Engine (`app/llm/llm_query.py`)
 
 **What it does**: A separate endpoint (`POST /query`) that accepts a plain-English question about past predictions, converts it to SQL, runs it against the SQLite database, and returns both the raw results and a plain-English interpretation.
 
 **Why this role showcases a different LLM skill**: Roles 1 and 2 are about reasoning over a single transaction. Role 3 is text-to-SQL — converting natural language to structured queries. This is a distinct, industry-relevant LLM capability.
 
 **Concepts to learn**
+
+#### [Files to Implement]
+- **`app/llm/llm_query.py`**: Logic for converting Natural Language to SQL (and interpreting results).
+- **`app/services/llm_query_service.py`**: Orchestration of SQL execution and interpretation flow.
 
 *Text-to-SQL prompting*
 - The LLM needs to know your database schema to write correct SQL — include the full `CREATE TABLE` statement in the system prompt
@@ -475,7 +503,7 @@ Hold transaction. Trigger 2FA challenge to cardholder before processing.
 
 ---
 
-## Phase 4 — Risk Engine (`app/risk_engine.py`)
+## Phase 4 — Risk Engine (`app/services/risk_engine.py`)
 
 **STATUS: NOT STARTED**
 **Estimated time: half a day**
@@ -483,6 +511,9 @@ Hold transaction. Trigger 2FA challenge to cardholder before processing.
 
 ### What this file is responsible for
 Combining outputs from the ML engine and LLM layer into a single final verdict. This is the only file that touches both — `ml_engine.py` and `llm_*.py` should never import each other.
+
+#### [Files to Implement]
+- **`app/services/risk_engine.py`**: The "brain" that merges ML scores, LLM overrides, and anomaly signals into the final verdict.
 
 ### Concepts to implement
 
@@ -509,13 +540,20 @@ fraud_probability <= 0.3  →  final = LOW    (skip LLM override)
 
 ---
 
-## Phase 5 — FastAPI Layer (`app/main.py`, `app/schemas.py`)
+## Phase 5 — FastAPI Layer (`app/main.py`, `app/schemas/schemas.py`)
 
 **STATUS: NOT STARTED**
 **Estimated time: 1 day**
 **Resume point: check which endpoint below returns a correct response when tested with curl or Postman**
 
 ### `app/schemas.py` — Pydantic models
+
+#### [Files to Implement]
+- **`app/main.py`**: FastAPI app setup, exception handlers, and lifespan management.
+- **`app/schemas/schemas.py`**: Pydantic models for `/predict` and `/query`.
+- **`app/api/routes.py`**: Definition of all REST endpoints.
+- **`app/api/dependencies.py`**: Shared logic for DB sessions and security.
+- **`app/api/middleware.py`**: Custom implementation of API key auth and rate limiting.
 
 **Concepts to implement**
 
@@ -572,7 +610,7 @@ fraud_probability <= 0.3  →  final = LOW    (skip LLM override)
 
 ---
 
-## Phase 6 — Storage Layer (`app/storage.py`)
+## Phase 6 — Storage Layer (`app/storage/storage_handler.py`)
 
 **STATUS: NOT STARTED**
 **Estimated time: half a day**
@@ -580,6 +618,9 @@ fraud_probability <= 0.3  →  final = LOW    (skip LLM override)
 
 ### What this file is responsible for
 All SQLite reads and writes. No ML, no LLM, no FastAPI logic here.
+
+#### [Files to Implement]
+- **`app/storage/storage_handler.py`**: Centralized SQLite operations (logging predictions, fetching stats).
 
 ### Database tables to create
 
@@ -628,6 +669,9 @@ All SQLite reads and writes. No ML, no LLM, no FastAPI logic here.
 
 ### What this module is responsible for
 Detecting when incoming transaction data has shifted significantly from the training distribution. This answers: "Is the model still seeing the same kind of data it was trained on?"
+
+#### [Files to Implement]
+- **`monitoring/drift.py`**: Implementation of the KS test and drift baseline comparison logic.
 
 ### Concepts to implement
 
