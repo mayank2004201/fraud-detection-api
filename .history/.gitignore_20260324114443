@@ -209,8 +209,8 @@ __marimo__/
 
 # Large dataset files - ignore them
 creditcard.csv
-# data.csv
-*.csv          
+data.csv
+*.csv          # ignores all CSV files
 *.parquet
 *.pkl
 data/
