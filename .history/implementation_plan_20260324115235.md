@@ -125,7 +125,7 @@ POST /query → {
 **Step 3 — Create the folder structure**
 ```
 fraud-detection-api/
-├── app/
+├├── app/
 │   ├── __init__.py
 │
 │   ├── core/

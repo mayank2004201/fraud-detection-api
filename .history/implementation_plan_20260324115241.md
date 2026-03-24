@@ -121,76 +121,27 @@ POST /query → {
 - Add `venv/` to `.gitignore`
 
 
-
 **Step 3 — Create the folder structure**
 ```
 fraud-detection-api/
 ├── app/
 │   ├── __init__.py
-│
-│   ├── core/
-│   │   ├── config.py
-│   │   ├── constants.py
-│   │   ├── logger.py            # central logging setup
-│   │   └── logging_config.py    # format + handlers
-│
-│   ├── api/
-│   │   ├── __init__.py
-│   │   ├── routes.py
-│   │   └── dependencies.py
-│
-│   ├── schemas/
-│   │   ├── __init__.py
-│   │   └── schemas.py
-│
-│   ├── services/
-│   │   ├── __init__.py
-│   │   ├── risk_engine.py
-│   │   └── analysis_service.py
-│
-│   ├── ml/
-│   │   ├── __init__.py
-│   │   ├── inference.py
-│   │   └── utils.py
-│
-│   ├── llm/
-│   │   ├── __init__.py
-│   │   ├── investigator.py
-│   │   ├── override.py
-│   │   ├── query.py
-│   │   └── prompts.py
-│
-│   ├── storage/
-│   │   ├── __init__.py
-│   │   └── storage.py
-│
-│   └── main.py
-│
+│   ├── main.py
+│   ├── schemas.py
+│   ├── risk_engine.py
+│   ├── ml_engine.py
+│   ├── llm_investigator.py
+│   ├── llm_override.py
+│   ├── llm_query.py
+│   └── storage.py
 ├── monitoring/
-│   ├── __init__.py
-│   ├── drift.py
-│   └── logging_monitor.py       # optional: log-based monitoring
-│
-├── logs/                        # all runtime logs go here
-│   ├── app.log
-│   └── error.log
-│
+│   └── drift.py
 ├── model/
-│   └── .gitkeep
-│
+│   └── .gitkeep          ← model.pkl goes here after training
 ├── training/
-│   ├── train.ipynb
-│   └── pipeline.py
-│
+│   └── train.ipynb
 ├── tests/
-│   ├── __init__.py
-│   ├── test_api.py
-│   ├── test_ml.py
-│   └── test_llm.py
-│
-├── scripts/
-│   └── setup_structure.py
-│
+│   └── test_predict.py
 ├── Dockerfile
 ├── render.yaml
 ├── requirements.txt

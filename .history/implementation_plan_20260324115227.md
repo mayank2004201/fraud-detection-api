@@ -121,10 +121,6 @@ POST /query → {
 - Add `venv/` to `.gitignore`
 
 
-
-**Step 3 — Create the folder structure**
-```
-fraud-detection-api/
 ├── app/
 │   ├── __init__.py
 │
@@ -191,6 +187,33 @@ fraud-detection-api/
 ├── scripts/
 │   └── setup_structure.py
 │
+├── Dockerfile
+├── render.yaml
+├── requirements.txt
+├── .env.example
+├── .gitignore
+└── README.md
+**Step 3 — Create the folder structure**
+```
+fraud-detection-api/
+├── app/
+│   ├── __init__.py
+│   ├── main.py
+│   ├── schemas.py
+│   ├── risk_engine.py
+│   ├── ml_engine.py
+│   ├── llm_investigator.py
+│   ├── llm_override.py
+│   ├── llm_query.py
+│   └── storage.py
+├── monitoring/
+│   └── drift.py
+├── model/
+│   └── .gitkeep          ← model.pkl goes here after training
+├── training/
+│   └── train.ipynb
+├── tests/
+│   └── test_predict.py
 ├── Dockerfile
 ├── render.yaml
 ├── requirements.txt
