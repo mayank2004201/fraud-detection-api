@@ -1,4 +1,10 @@
-fastapi
+pandas
+numpy
+scikit-learn
+matplotlib
+seaborn
+
+fastapi` — web framework
 uvicorn[standard]
 pydantic
 python-dotenv

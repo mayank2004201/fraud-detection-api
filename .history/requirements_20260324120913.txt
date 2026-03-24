@@ -1,0 +1,19 @@
+pandas
+numpy
+scikit-learn
+matplotlib
+seaborn
+
+fastapi` — web framework
+uvicorn[standard]` — ASGI server for local development
+pydantic` — request/response validation
+python-dotenv` — loads `.env` file
+xgboost` — gradient boosted tree classifier
+scikit-learn` — Isolation Forest, preprocessing, metrics
+shap` — model explainability
+groq` — official Groq Python SDK
+scipy
+pandas
+numpy
+slowapi
+pytest

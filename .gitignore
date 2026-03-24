@@ -214,3 +214,4 @@ creditcard.csv
 *.parquet
 *.pkl
 data/
+template.py

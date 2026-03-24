@@ -1,0 +1,19 @@
+pandas
+numpy
+scikit-learn
+matplotlib
+seaborn
+
+fastapi` — web framework
+uvicorn[standard]` — ASGI server for local development
+pydantic
+python-dotenv
+xgboost
+scikit-learn
+shap
+groq
+scipy
+pandas
+numpy
+slowapi
+pytest
