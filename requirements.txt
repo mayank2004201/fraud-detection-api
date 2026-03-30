@@ -13,3 +13,4 @@ slowapi
 pytest
 mlflow
 dagshub
+pydantic-settings
