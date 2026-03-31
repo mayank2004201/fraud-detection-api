@@ -215,3 +215,6 @@ creditcard.csv
 *.pkl
 data/
 template.py
+.agent/
+# Local SQLite Database
+llm_decisions.db

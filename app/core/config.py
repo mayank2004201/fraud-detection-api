@@ -19,5 +19,21 @@ class Settings(BaseSettings):
     # Feature Engineering
     COLS_TO_SCALE: list = ["Time", "Amount"]
     CLASSIFICATION_THRESHOLD: float = 0.3
+    
+    # Anomaly Detection (Isolation Forest)
+    ISOLATION_FOREST_PARAMS: dict = {
+        "n_estimators": 100,
+        "contamination": "auto",
+        "random_state": 42
+    }
+
+    # LLM Settings (Groq API)
+    GROQ_API_KEY: str = os.getenv("GROQ_API_KEY")
+    LLM_MODEL: str = "llama-3.3-70b-versatile"
+    
+    # Risk Override Settings (Role 2)
+    DATABASE_PATH: str = os.path.join(PROJECT_ROOT, "llm_decisions.db")
+    UNCERTAIN_ZONE_LOW: float = 0.4
+    UNCERTAIN_ZONE_HIGH: float = 0.7
 
 settings = Settings()
