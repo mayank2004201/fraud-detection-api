@@ -13,6 +13,7 @@ from sklearn.metrics import (
     roc_auc_score
 )
 from xgboost import XGBClassifier
+from sklearn.ensemble import IsolationForest
 from app.core.config import settings
 
 def load_and_preprocess() -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series, StandardScaler]:
@@ -59,7 +60,12 @@ def run_training_pipeline():
     )
     model.fit(X_train, y_train)
 
-    # 3. Prediction & Evaluation
+    # 3. Anomaly Detection (Isolation Forest)
+    print(f"  -> Training Isolation Forest (Params: {settings.ISOLATION_FOREST_PARAMS})...")
+    iso_forest = IsolationForest(**settings.ISOLATION_FOREST_PARAMS)
+    iso_forest.fit(X_train)
+
+    # 4. Prediction & Evaluation
     probs = model.predict_proba(X_test)[:, 1]
     preds = (probs > settings.CLASSIFICATION_THRESHOLD).astype(int)
 
@@ -86,6 +92,7 @@ def run_training_pipeline():
     os.makedirs(settings.MODEL_DIR, exist_ok=True)
     artifact = {
         "model": model,
+        "isolation_forest": iso_forest,
         "scaler": scaler,
         "feature_baseline": feature_baseline,
         "feature_names": X_train.columns.tolist(),

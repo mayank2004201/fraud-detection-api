@@ -1,3 +1,6 @@
+import pandas as pd
+from typing import List
+from sklearn.preprocessing import StandardScaler
 from app.core.config import settings
 
 def preprocess_transaction(

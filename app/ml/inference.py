@@ -8,6 +8,7 @@ from app.ml.preprocessing import preprocess_transaction
 class FraudPredictor:
     def __init__(self):
         self.model = None
+        self.iso_forest = None
         self.scaler = None
         self.feature_names = None
         self.threshold = None
@@ -20,6 +21,7 @@ class FraudPredictor:
             
         artifact = joblib.load(settings.MODEL_PATH)
         self.model = artifact["model"]
+        self.iso_forest = artifact.get("isolation_forest")
         self.scaler = artifact["scaler"]
         self.feature_names = artifact["feature_names"]
         self.threshold = artifact.get("optimal_threshold", settings.CLASSIFICATION_THRESHOLD)
@@ -43,9 +45,17 @@ class FraudPredictor:
         probability = float(self.model.predict_proba(processed_data)[:, 1][0])
         is_fraud = bool(probability > self.threshold)
         
+        # 3. Anomaly Score (Isolation Forest)
+        anomaly_score = None
+        if self.iso_forest:
+            # decision_function returns scores where lower is more anomalous
+            # typically inverted or normalized for easier use
+            anomaly_score = float(self.iso_forest.decision_function(processed_data)[0])
+        
         return {
             "fraud_probability": round(probability, 4),
             "is_fraud": is_fraud,
+            "anomaly_score": round(anomaly_score, 4) if anomaly_score is not None else None,
             "threshold_used": self.threshold
         }
 
