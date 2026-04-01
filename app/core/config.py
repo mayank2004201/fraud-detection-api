@@ -29,6 +29,7 @@ class Settings(BaseSettings):
 
     # LLM Settings (Groq API)
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY")
+    API_SECRET_KEY: str = os.getenv("API_SECRET_KEY", "default-secret-change-me")
     LLM_MODEL: str = "llama-3.3-70b-versatile"
     
     # Risk Override Settings (Role 2)
